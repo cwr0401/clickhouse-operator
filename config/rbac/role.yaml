@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - clickhouse.k8s.xjuzicloud.com
+  resources:
+  - clickhousekeepers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clickhouse.k8s.xjuzicloud.com
+  resources:
+  - clickhousekeepers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clickhouse.k8s.xjuzicloud.com
+  resources:
+  - clickhousekeepers/status
+  verbs:
+  - get
+  - patch
+  - update
