@@ -82,30 +82,30 @@ type LoggerFormatting struct {
 }
 
 type JsonKeyNames struct {
-	// <date_time>date_time</date_time>
+	// DataTime json key name, default is "date_time".
 	DateTime string `json:"dateTime,omitempty"`
 
-	// <thread_name>thread_name</thread_name>
+	// ThreadName json key name, default is "thread_name".
 	ThreadName string `json:"threadName,omitempty"`
 
-	// <thread_id>thread_id</thread_id>
+	// ThreadID json key name, default is "thread_id"
 	ThreadID string `json:"threadID,omitempty"`
 
-	// <level>level</level>
+	// Level json key name, default is "level"
 	Level string `json:"level,omitempty"`
 
-	// <query_id>query_id</query_id>
+	// QueryID json key name, default is "query_id".
 	QueryID string `json:"queryID,omitempty"`
 
-	// <logger_name>logger_name</logger_name>
+	// LoggerName json key name, default is "logger_name".
 	LoggerName string `json:"loggerName,omitempty"`
 
-	// <message>message</message>
+	// Message json key name, default is "message".
 	Message string `json:"message,omitempty"`
 
-	// <source_file>source_file</source_file>
+	// SourceFile json key name, default is "source_file".
 	SourceFile string `json:"sourceFile,omitempty"`
 
-	// <source_line>source_line</source_line>
+	// SourceLine json key name, default is "source_line".
 	SourceLine int `json:"sourceLine,omitempty"`
 }
