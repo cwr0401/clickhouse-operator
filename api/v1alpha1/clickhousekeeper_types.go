@@ -33,8 +33,17 @@ type ClickHouseKeeperSpec struct {
 	// Foo is an example field of ClickHouseKeeper. Edit clickhousekeeper_types.go to remove/update
 	//Foo string `json:"foo,omitempty"`
 
-	// config is the configuration for the ClickHouseKeeper cluster
+	// Configuration is the configuration for the ClickHouseKeeper cluster
 	Configuration ClickHouseKeeperConfiguration `json:"configuration,omitempty"`
+
+	// Cluster
+	Cluster ClickHouseKeeperCluster `json:"cluster"`
+}
+
+type ClickHouseKeeperCluster struct {
+	Name string `json:"name"`
+
+	Nodes uint `json:"nodes,omitempty"`
 }
 
 type ClickHouseKeeperConfiguration struct {
