@@ -20,6 +20,8 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/cwr0401/clickhouse-operator/models/config"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -33,7 +35,7 @@ type ClickHouseKeeperSpec struct {
 	// Foo is an example field of ClickHouseKeeper. Edit clickhousekeeper_types.go to remove/update
 	//Foo string `json:"foo,omitempty"`
 
-	// Configuration is the configuration for the ClickHouseKeeper cluster
+	// Configuration is the configuration for the ClickHouseKeeper cluster.
 	Configuration ClickHouseKeeperConfiguration `json:"configuration,omitempty"`
 
 	// Cluster
@@ -41,24 +43,62 @@ type ClickHouseKeeperSpec struct {
 }
 
 type ClickHouseKeeperCluster struct {
+	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	Nodes uint `json:"nodes,omitempty"`
+	// +kubebuilder:validation:Maximum=1
+	// +kubebuilder:default=1
+	// +optional
+	QuorumNodes uint `json:"QuorumNodes,omitempty"`
+
+	//
+	ServiceName string `json:"serviceName,omitempty"`
+
+	// template
 }
 
 type ClickHouseKeeperConfiguration struct {
+
+	// max_thread_pool_size
+	// default value 100
+	MaxThreadPoolSize uint `json:"maxThreadPoolSize,omitempty"`
+
+	// max_thread_pool_free_size
+	// default value 1000
+	MaxThreadPoolFreeSize uint `json:"maxThreadPoolFreeSize,omitempty"`
+
+	// thread_pool_queue_size
+	// default value 10000
+	ThreadPoolQueueSize uint `json:"threadPoolQueueSize,omitempty"`
+
+	// max_connections
+	// default value 1024
+	MaxConnections uint `json:"maxConnections,omitempty"`
+
 	// listen_host
 	// Listen specified address.
-	ListenHost []string `json:"listen_host,omitempty"`
+	// Default value "::", enable IPv4 and IPv6.
+	ListenHost []string `json:"listenHost,omitempty"`
 
 	// logger
 	Logger Logger `json:"logger,omitempty"`
 
+	// ClickHouse Keeper configuration
+	KepperServer ClickHouseKeeperServerConfig `json:"kepperServer,omitempty"`
+
+	// OpenSSL
+	OpenSSL OpenSSL `json:"openSSL,omitempty"`
+}
+
+type ClickHouseKeeperServerConfig struct {
 	// Port for a client to connect (default for ZooKeeper is 2181).
-	TcpPort int `json:"tcpPort,omitempty"`
+	TcpPort uint `json:"tcpPort,omitempty"`
 
 	// Secure port for an SSL connection between client and keeper-server. 0 is disabled.
 	TcpPortSecure int `json:"tcpPortSecure,omitempty"`
+
+	// storage_path
+	StoragePath string `json:"storagePath,omitempty"`
 
 	// Path to coordination logs, just like ZooKeeper it is best to store logs on non-busy nodes.
 	// Default is "/var/lib/clickhouse/coordination/logs"
@@ -69,124 +109,153 @@ type ClickHouseKeeperConfiguration struct {
 	SnapshotStoragePath string `json:"snapshotStoragePath,omitempty"`
 
 	RaftConfiguration RaftConfiguration `json:"raftConfiguration,omitempty"`
-
-	// OpenSSL
-	OpenSSL OpenSSL `json:"openSSL,omitempty"`
 }
 
 type RaftConfiguration struct {
-	// min_session_timeout_ms
-	// Default is 10000ms, Min client session timeout.
+	// Min client session timeout.
+	// Default is 10000ms.
+	// +kubebuilder:default=10s
+	// +optional
 	MinSessionTimeoutDuration time.Duration `json:"minSessionTimeoutDuration,omitempty"`
 
-	// session_timeout_ms
-	// Default is 100000ms, Max client session timeout.
+	// Max client session timeout.
+	// Default is 100000ms.
+	// +kubebuilder:default=100s
+	// +optional
 	SessionTimeoutDuration time.Duration `json:"sessionTimeoutDuration,omitempty"`
 
-	// operation_timeout_ms
-	// Default is 10000ms, Default client operation timeout.
+	// Default client operation timeout.
+	// Default is 10000ms.
+	// +kubebuilder:default=10ms
+	// +optional
 	OperationTimeoutDuration time.Duration `json:"operationTimeoutDuration,omitempty"`
 
-	// dead_session_check_period_ms
-	// Default is 500ms, How often leader will check sessions to consider them dead and remove.
-	DeadSessionCheckPeriodDuration time.Duration `json:"dead_session_check_period_ms"`
+	// How often leader will check sessions to consider them dead and remove.
+	// Default is 500ms.
+	// +kubebuilder:default=500ms
+	// +optional
+	DeadSessionCheckPeriodDuration time.Duration `json:"deadSessionCheckPeriodDuration,omitempty"`
 
-	// heart_beat_interval_ms
-	// Defaults 500ms, Heartbeat interval between quorum nodes.
+	// Heartbeat interval between quorum nodes.
+	// Defaults 500ms.
+	// +kubebuilder:default=500ms
+	// +optional
 	HeartBeatIntervalDuration time.Duration `json:"heartBeatIntervalDuration,omitempty"`
 
-	// election_timeout_lower_bound_ms
-	// Default is 1000ms, Lower bound of election timer (avoid too often leader elections)
-	ElectionTimeoutLowerBoundDuration time.Duration `json:"electionTimeoutLowerBound,omitempty"`
+	// Lower bound of election timer (avoid too often leader elections).
+	// Default is 1000ms.
+	// +kubebuilder:default=1s
+	// +optional
+	ElectionTimeoutLowerBoundDuration time.Duration `json:"electionTimeoutLowerBoundDuration,omitempty"`
 
-	// election_timeout_upper_bound_ms
-	// Default is 2000ms, Upper bound of election timer (avoid too often leader elections).
-	ElectionTimeoutUpperBoundDuration time.Duration `json:"electionTimeoutUpperBound,omitempty"`
+	// Upper bound of election timer (avoid too often leader elections).
+	// Default is 2000ms.
+	// +kubebuilder:default=2s
+	// +optional
+	ElectionTimeoutUpperBoundDuration time.Duration `json:"electionTimeoutUpperBoundDuration,omitempty"`
 
-	// eserved_log_items
-	// Default is 100000, How many log items to store (don't remove during compaction).
+	// How many log items to store (don't remove during compaction).
+	// Default is 100000.
+	// +kubebuilder:default=100000
+	// +optional
 	EservedLogItems uint64 `json:"eservedLogItems,omitempty"`
 
-	// snapshot_distance
-	// Default is 100000, How many log items we have to collect to write new snapshot.
+	// How many log items we have to collect to write new snapshot.
+	// Default is 100000.
+	// +kubebuilder:default=100000
+	// +optional
 	SnapshotDistance uint64 `json:"snapshotDistance,omitempty"`
 
-	// auto_forwarding
-	// Default is true, Allow to forward write requests from followers to leader.
+	// Allow to forward write requests from followers to leader.
+	// Default is true.
+	// +kubebuilder:default=true
+	// +optional
 	AutoForwarding bool `json:"autoForwarding,omitempty"`
 
-	// shutdown_timeout
-	// Default is 5000ms, How much time we will wait until RAFT shutdown.
-	ShutdownTimeout time.Duration `json:"shutdownTimeout,omitempty"`
+	// How much time we will wait until RAFT shutdown.
+	// Default is 5000ms.
+	// +kubebuilder:default=5s
+	// +optional
+	ShutdownTimeoutDuration time.Duration `json:"shutdownTimeoutDuration,omitempty"`
 
-	// session_shutdown_timeout
-	// Default is 10000ms, How much time we will wait until sessions are closed during shutdown.
+	// How much time we will wait until sessions are closed during shutdown.
+	// Default is 10000ms.
+	// +kubebuilder:default=10s
+	// +optional
 	SessionShutdownTimeoutDuration time.Duration `json:"sessionShutdownTimeoutDuration,omitempty"`
 
-	// startup_timeout
-	// Default is 180000ms, How much time we will wait until RAFT to start. \
+	// How much time we will wait until RAFT to start.
+	// Default is 180000ms.
+	// +kubebuilder:default=3m
+	// +optional
 	StartupTimeoutDuration time.Duration `json:"startupTimeoutDuration,omitempty"`
 
-	// raft_logs_level
-	// Default is information, Log internal RAFT logs into main server log level. Valid values: 'trace', 'debug', 'information', 'warning', 'error', 'fatal', 'none'.
-	RaftLogsLevel string `json:"raftLogsLevel,omitempty"`
+	// Log internal RAFT logs into main server log level. Valid values: 'trace', 'debug', 'information', 'warning', 'error', 'fatal', 'none'.
+	// Default is information.
+	// +kubebuilder:validation:Enum=trace;debug;information;warning;error;fatal;none
+	// +kubebuilder:default=information
+	// +optional
+	RaftLogsLevel config.LoggerLevel `json:"raftLogsLevel,omitempty"`
 
-	// rotate_log_storage_interval
-	// Default is 100000, How many records will be stored in one log storage file.
+	// How many records will be stored in one log storage file.
+	// Default is 100000.
+	// +kubebuilder:default=100000
+	// +optional
 	RotateLogStorageInterval uint64 `json:"rotateLogStorageInterval,omitempty"`
 
-	// snapshots_to_keep
-	// Default is 3, How many compressed snapshots to keep on disk.
-	SnapshotsToKeep int `json:"snapshotsToKeep,omitempty"`
+	// How many compressed snapshots to keep on disk.
+	// Default is 3.
+	// +kubebuilder:default=3
+	// +optional
+	SnapshotsToKeep uint64 `json:"snapshotsToKeep,omitempty"`
 
-	// stale_log_gap
-	// Default is 10000, When node became stale and should receive snapshots from leader.
+	// When node became stale and should receive snapshots from leader.
+	// Default is 10000.
+	// +kubebuilder:default=10000
+	// +optional
 	StaleLogGap uint64 `json:"staleLogGap,omitempty"`
 
-	// fresh_log_gap,
-	// Default is 200, When node became fresh.
+	// When node became fresh.
+	// Default is 200.
+	// +kubebuilder:default=200
+	// +optional
 	FreshLogGap uint64 `json:"freshLogGap,omitempty"`
 
-	// max_requests_batch_size,
-	// Default is 100, Max size of batch in requests count before it will be sent to RAFT.
+	// Max size of batch in requests count before it will be sent to RAFT.
+	// Default is 100.
+	// +kubebuilder:default=100
+	// +optional
 	MaxRequestsBatchSize uint64 `json:"maxRequestsBatchSize,omitempty"`
 
-	// quorum_reads
-	// Default is false, Execute read requests as writes through whole RAFT consesus with similar speed.
+	// Execute read requests as writes through whole RAFT consesus with similar speed.
+	// Default is false.
+	// +kubebuilder:default=true
+	// +optional
 	QuorumReads bool `json:"quorumReads,omitempty"`
 
-	// force_sync
-	// Default is  true, Call fsync on each change in RAFT changelog.
+	// Call fsync on each change in RAFT changelog.
+	// Default is true.
+	// +kubebuilder:default=true
+	// +optional
 	ForceSync bool `json:"forceSync,omitempty"`
 
-	// compress_logs
-	// Default is true, Write compressed coordination logs in ZSTD format.
+	// Write compressed coordination logs in ZSTD format.
+	// Default is true.
+	// +kubebuilder:default=true
+	// +optional
 	CompressLogs bool `json:"compressLogs,omitempty"`
 
-	// compress_snapshots_with_zstd_format
-	// Default is true, Write compressed snapshots in ZSTD format (instead of custom LZ4).
+	// Write compressed snapshots in ZSTD format (instead of custom LZ4).
+	// Default is true.
+	// +kubebuilder:default=true
+	// +optional
 	CompressSnapshotsWithZstdFormat bool `json:"compressSnapshotsWithZstdFormat,omitempty"`
 
-	// configuration_change_tries_count
-	// Default 20, How many times we will try to apply configuration change (add/remove server) to the cluster.
+	// How many times we will try to apply configuration change (add/remove server) to the cluster.
+	// Default 20.
+	// +kubebuilder:default=20
+	// +optional
 	ConfigurationChangeTriesCount uint64 `json:"configurationChangeTriesCount,omitempty"`
-}
-
-type OpenSSL struct {
-	// Used for secure tcp port
-	Server OpenSSLServer `json:"server,omitempty"`
-}
-
-type OpenSSLServer struct {
-	CertificateFile     string   `json:"certificateFile,omitempty"`
-	PrivateKeyFile      string   `json:"privateKeyFile,omitempty"`
-	DhParamsFile        string   `json:"dhParamsFile,omitempty"`
-	CAConfig            string   `json:"caConfig,omitempty"`
-	LoadDefaultCAFile   bool     `json:"loadDefaultCAFile,omitempty"`
-	VerificationMode    string   `json:"verificationMode,omitempty"`
-	CacheSessions       bool     `json:"cacheSessions,omitempty"`
-	DisableProtocols    []string `json:"disableProtocols,omitempty"`
-	PreferServerCiphers bool     `json:"preferServerCiphers,omitempty"`
 }
 
 // ClickHouseKeeperStatus defines the observed state of ClickHouseKeeper
