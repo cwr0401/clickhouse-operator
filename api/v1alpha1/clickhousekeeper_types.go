@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cwr0401/clickhouse-operator/models/config"
@@ -36,9 +34,11 @@ type ClickHouseKeeperSpec struct {
 	//Foo string `json:"foo,omitempty"`
 
 	// Configuration is the configuration for the ClickHouseKeeper cluster.
+	// +optional
 	Configuration ClickHouseKeeperConfiguration `json:"configuration,omitempty"`
 
 	// Cluster
+	// +kubebuilder:validation:Required
 	Cluster ClickHouseKeeperCluster `json:"cluster"`
 }
 
@@ -46,7 +46,7 @@ type ClickHouseKeeperCluster struct {
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	// +kubebuilder:validation:Maximum=1
+	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default=1
 	// +optional
 	QuorumNodes uint `json:"QuorumNodes,omitempty"`
@@ -59,34 +59,58 @@ type ClickHouseKeeperCluster struct {
 
 type ClickHouseKeeperConfiguration struct {
 
+	// Maximum number of threads in the Global thread pool.
+	// This will default to a maximum of 100 threads if not specified.
 	// max_thread_pool_size
-	// default value 100
+	// +kubebuilder:default=100
+	// +optional
 	MaxThreadPoolSize uint `json:"maxThreadPoolSize,omitempty"`
 
-	// max_thread_pool_free_size
-	// default value 1000
+	// If the number of idle threads in the Global Thread pool is greater
+	// than `max_thread_pool_free_size`,
+	// then ClickHouse releases resources occupied by some threads and
+	// the pool size is decreased. Threads can be created again if necessary.
+	// Default value 1000.
+	// +kubebuilder:default=1000
+	// +optional
 	MaxThreadPoolFreeSize uint `json:"maxThreadPoolFreeSize,omitempty"`
 
+	// The maximum number of jobs that can be scheduled on the Global Thread pool.
+	// Increasing queue size leads to larger memory usage. It is recommended to
+	// keep this value equal to max_thread_pool_size.
+	// Default value 10000.
 	// thread_pool_queue_size
-	// default value 10000
+	// +kubebuilder:default=10000
+	// +optionaltempty"`
 	ThreadPoolQueueSize uint `json:"threadPoolQueueSize,omitempty"`
 
+	// The maximum number of inbound connections.
+	// Default value 1024.
 	// max_connections
-	// default value 1024
+	// +kubebuilder:default=1024
+	// +optional
 	MaxConnections uint `json:"maxConnections,omitempty"`
 
-	// listen_host
+	// Restriction on hosts that requests can come from.
+	// If you want the server to answer all of them, specify `::`.
 	// Listen specified address.
 	// Default value "::", enable IPv4 and IPv6.
+	// listen_host
+	// +kubebuilder:validation:UniqueItems=true
+	// +kubebuilder:default={"::"}
+	// +optional
 	ListenHost []string `json:"listenHost,omitempty"`
 
-	// logger
+	// Logging settings.
+	// +optional
 	Logger Logger `json:"logger,omitempty"`
 
-	// ClickHouse Keeper configuration
+	// ClickHouse Keeper configuration.
+	// +optional
 	KepperServer ClickHouseKeeperServerConfig `json:"kepperServer,omitempty"`
 
-	// OpenSSL
+	// ssl server configuration.
+	// +optional
 	OpenSSL OpenSSL `json:"openSSL,omitempty"`
 }
 
@@ -95,9 +119,9 @@ type ClickHouseKeeperServerConfig struct {
 	TcpPort uint `json:"tcpPort,omitempty"`
 
 	// Secure port for an SSL connection between client and keeper-server. 0 is disabled.
-	TcpPortSecure int `json:"tcpPortSecure,omitempty"`
+	TcpPortSecure uint `json:"tcpPortSecure,omitempty"`
 
-	// storage_path
+	// Path to the parent directory.
 	StoragePath string `json:"storagePath,omitempty"`
 
 	// Path to coordination logs, just like ZooKeeper it is best to store logs on non-busy nodes.
@@ -114,45 +138,45 @@ type ClickHouseKeeperServerConfig struct {
 type RaftConfiguration struct {
 	// Min client session timeout.
 	// Default is 10000ms.
-	// +kubebuilder:default=10s
+	// +kubebuilder:default=10000
 	// +optional
-	MinSessionTimeoutDuration time.Duration `json:"minSessionTimeoutDuration,omitempty"`
+	MinSessionTimeoutMillisecond uint64 `json:"minSessionTimeoutMillisecond,omitempty"`
 
 	// Max client session timeout.
 	// Default is 100000ms.
-	// +kubebuilder:default=100s
+	// +kubebuilder:default=100000
 	// +optional
-	SessionTimeoutDuration time.Duration `json:"sessionTimeoutDuration,omitempty"`
+	SessionTimeoutMillisecond uint64 `json:"sessionTimeoutMillisecond,omitempty"`
 
 	// Default client operation timeout.
 	// Default is 10000ms.
-	// +kubebuilder:default=10ms
+	// +kubebuilder:default=10000
 	// +optional
-	OperationTimeoutDuration time.Duration `json:"operationTimeoutDuration,omitempty"`
+	OperationTimeoutMillisecond uint64 `json:"operationTimeoutMillisecond,omitempty"`
 
 	// How often leader will check sessions to consider them dead and remove.
 	// Default is 500ms.
-	// +kubebuilder:default=500ms
+	// +kubebuilder:default=500
 	// +optional
-	DeadSessionCheckPeriodDuration time.Duration `json:"deadSessionCheckPeriodDuration,omitempty"`
+	DeadSessionCheckPeriodMillisecond uint64 `json:"deadSessionCheckPeriodMillisecond,omitempty"`
 
 	// Heartbeat interval between quorum nodes.
 	// Defaults 500ms.
-	// +kubebuilder:default=500ms
+	// +kubebuilder:default=500
 	// +optional
-	HeartBeatIntervalDuration time.Duration `json:"heartBeatIntervalDuration,omitempty"`
+	HeartBeatIntervalMillisecond uint64 `json:"heartBeatIntervalMillisecond,omitempty"`
 
 	// Lower bound of election timer (avoid too often leader elections).
 	// Default is 1000ms.
-	// +kubebuilder:default=1s
+	// +kubebuilder:default=1000
 	// +optional
-	ElectionTimeoutLowerBoundDuration time.Duration `json:"electionTimeoutLowerBoundDuration,omitempty"`
+	ElectionTimeoutLowerBoundMillisecond uint64 `json:"electionTimeoutLowerBoundMillisecond,omitempty"`
 
 	// Upper bound of election timer (avoid too often leader elections).
 	// Default is 2000ms.
-	// +kubebuilder:default=2s
+	// +kubebuilder:default=2000
 	// +optional
-	ElectionTimeoutUpperBoundDuration time.Duration `json:"electionTimeoutUpperBoundDuration,omitempty"`
+	ElectionTimeoutUpperBoundMillisecond uint64 `json:"electionTimeoutUpperBoundMillisecond,omitempty"`
 
 	// How many log items to store (don't remove during compaction).
 	// Default is 100000.
@@ -174,21 +198,21 @@ type RaftConfiguration struct {
 
 	// How much time we will wait until RAFT shutdown.
 	// Default is 5000ms.
-	// +kubebuilder:default=5s
+	// +kubebuilder:default=5000
 	// +optional
-	ShutdownTimeoutDuration time.Duration `json:"shutdownTimeoutDuration,omitempty"`
+	ShutdownTimeoutMillisecond uint64 `json:"shutdownTimeoutMillisecond,omitempty"`
 
 	// How much time we will wait until sessions are closed during shutdown.
 	// Default is 10000ms.
-	// +kubebuilder:default=10s
+	// +kubebuilder:default=10000
 	// +optional
-	SessionShutdownTimeoutDuration time.Duration `json:"sessionShutdownTimeoutDuration,omitempty"`
+	SessionShutdownTimeoutMillisecond uint64 `json:"sessionShutdownTimeoutMillisecond,omitempty"`
 
 	// How much time we will wait until RAFT to start.
 	// Default is 180000ms.
-	// +kubebuilder:default=3m
+	// +kubebuilder:default=180000
 	// +optional
-	StartupTimeoutDuration time.Duration `json:"startupTimeoutDuration,omitempty"`
+	StartupTimeoutMillisecond uint64 `json:"startupTimeoutMillisecond,omitempty"`
 
 	// Log internal RAFT logs into main server log level. Valid values: 'trace', 'debug', 'information', 'warning', 'error', 'fatal', 'none'.
 	// Default is information.

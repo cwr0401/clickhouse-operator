@@ -128,11 +128,15 @@ type OpenSSLConfig struct {
 
 	// Require a TLSv1.1 connection. Acceptable values: `true`, `false`.
 	// Default is false.
-	RequireTLSv1_1 bool `xml:"requireTlSv11,omitempty"`
+	RequireTLSv1_1 bool `xml:"requireTlSv1_1,omitempty"`
 
 	// Require a TLSv1.2 connection. Acceptable values: `true`, `false`.
 	// Default is false.
-	RequireTLSv1_2 bool `xml:"requireTlSv12,omitempty"`
+	RequireTLSv1_2 bool `xml:"requireTlSv1_2,omitempty"`
+
+	// Require a TLSv1.3 connection. Acceptable values: `true`, `false`.
+	// Default is true.
+	RequireTLSv1_3 bool `xml:"requireTlSv1_3,omitempty"`
 
 	// Activates OpenSSL FIPS mode. Supported if the library’s OpenSSL version supports FIPS.
 	// Default is false.

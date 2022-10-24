@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"time"
-
 	"github.com/cwr0401/clickhouse-operator/models/config"
 )
 
@@ -225,9 +223,9 @@ type OpenSSLConfig struct {
 
 	// Time for caching the session on the server.
 	// Default is [2h](https://github.com/ClickHouse/boringssl/blob/master/include/openssl/ssl.h#L1926)
-	// +kubebuilder:default=2h
+	// +kubebuilder:default="2h"
 	// +optional
-	SessionTimeout time.Duration `json:"sessionTimeout,omitempty"`
+	SessionTimeout string `json:"sessionTimeoutSecond,omitempty"`
 
 	// If enabled, verify that the certificate CN or SAN matches the peer hostname.
 	// Default is false
@@ -263,18 +261,18 @@ type OpenSSLConfig struct {
 	// For example: `<privateKeyPassphraseHandler>`, `<name>KeyFileHandler</name>`, `<options><password>test</password></options>`, `</privateKeyPassphraseHandler>`.
 	// Default is `KeyConsoleHandler`.
 	// +optional
-	// PrivateKeyPassphraseHandler
+	PrivateKeyPassphraseHandler PrivateKeyPassphraseHandler `json:"privateKeyPassphraseHandler,omitempty"`
 
 	// Class (a subclass of CertificateHandler) for verifying invalid certificates.
-	// For example: `<invalidCertificateHandler> <name>ConsoleCertificateHandler</name> </invalidCertificateHandler>` .
 	// Default is `ConsoleCertificateHandler`
 	// +optional
-	// InvalidCertificateHandler
+	InvalidCertificateHandler InvalidCertificateHandler `json:"invalidCertificateHandler,omitempty"`
 
-	// disableProtocols (default: "") – Protocols that are not allowed to use.
+	// Protocols that are not allowed to use.
 	// Default is "".
+	// +kubebuilder:validation:Enum=sslv2;sslv3;tlsv1;tlsv1_1;tlsv1_2;tlsv1_3
 	// +optional
-	DisableProtocols []string `json:"disableProtocols,omitempty"`
+	DisableProtocols []config.SSLProtocolName `json:"disableProtocols,omitempty"`
 
 	// Preferred server ciphers on the client.
 	// Default is false.
@@ -286,7 +284,23 @@ type OpenSSLConfig struct {
 	DhParamsFile string `json:"dhParamsFile,omitempty"`
 }
 
-//
+// Class (a subclass of CertificateHandler) for verifying invalid certificates.
+type InvalidCertificateHandler struct {
+	// Default is `ConsoleCertificateHandler`
+	// +optional
+	Name config.CertificateHandler `json:"name,omitempty"`
+}
+
+type PrivateKeyPassphraseHandler struct {
+	// Name of the PrivateKeyPassphraseHandler subclass.
+	// Default is `KeyConsoleHandler`.
+	// +optional
+	Name config.KeyPassphraseHandler `json:"name,omitempty"`
+
+	// Options for the PrivateKeyPassphraseHandler subclass.
+	// +optional
+	Options map[string]string `json:"options,omitempty"`
+}
 
 type OpenSSL struct {
 	// Server OpenSSL settings.
